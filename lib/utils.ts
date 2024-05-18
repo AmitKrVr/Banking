@@ -3,6 +3,8 @@ import { type ClassValue, clsx } from "clsx";
 import qs from "query-string";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
+import { getAccount, getAccounts } from "./actions/bank.actions";
+import { getLoggedInUser } from "./actions/user.actions";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -209,3 +211,27 @@ export const authFormSchema = (type: string) => z.object({
   email: z.string().email(),
   password: z.string().min(8),
 })
+
+interface fetchHomeProps {
+  id: string | string[] | undefined,
+}
+
+export const fetchHomeData = async ({ id }: fetchHomeProps) => {
+  const loggedIn = await getLoggedInUser();
+
+  if (!loggedIn) {
+    console.error('No logged in user');
+    return null;
+  }
+
+  const accounts = await getAccounts({
+    userId: loggedIn.$id
+  })
+
+  const accountsData = accounts?.data;
+  const appwriteItemId = (id as string) || accountsData[0]?.appwriteItemId;
+
+  const account = await getAccount({ appwriteItemId })
+
+  return { loggedIn, accounts, accountsData, appwriteItemId, account };
+}

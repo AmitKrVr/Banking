@@ -1,14 +1,11 @@
 import BankCard from '@/components/BankCard';
 import HeaderBox from '@/components/HeaderBox'
+import { MyBanksSkeleton } from '@/components/skeletons';
 import { getAccounts } from '@/lib/actions/bank.actions';
 import { getLoggedInUser } from '@/lib/actions/user.actions';
-import React from 'react'
+import React, { Suspense } from 'react'
 
-const MyBanks = async () => {
-    const loggedIn = await getLoggedInUser();
-    const accounts = await getAccounts({
-        userId: loggedIn.$id
-    })
+const MyBanks = () => {
 
     return (
         <section className='flex'>
@@ -23,18 +20,37 @@ const MyBanks = async () => {
                         Your cards
                     </h2>
                     <div className="flex flex-wrap gap-6">
-                        {accounts && accounts.data.map((a: Account) => (
-                            <BankCard
-                                key={accounts.id}
-                                account={a}
-                                userName={loggedIn?.firstName}
-                            />
-                        ))}
+                        <Suspense fallback={<MyBanksSkeleton />}>
+                            <AsyncBankCards />
+                        </Suspense>
                     </div>
                 </div>
             </div>
         </section>
     )
 }
+
+
+const AsyncBankCards = async () => {
+    const loggedIn = await getLoggedInUser();
+    const accounts = await getAccounts({
+        userId: loggedIn.$id
+    })
+
+    // Rendering the actual BankCards component after data fetching
+    return (
+        <>
+            {accounts && accounts.data.map((a: Account) => (
+                <BankCard
+                    key={accounts.id}
+                    account={a}
+                    userName={loggedIn?.firstName}
+                />
+            ))}
+        </>
+    );
+}
+
+
 
 export default MyBanks

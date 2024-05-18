@@ -2,10 +2,23 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import BankCard from './BankCard'
-import { countTransactionCategories } from '@/lib/utils'
+import { countTransactionCategories, fetchHomeData } from '@/lib/utils'
 import Category from './Category'
+import PlaidLink from './PlaidLink'
+import { getLoggedInUser } from '@/lib/actions/user.actions'
+import { getAccount, getAccounts } from '@/lib/actions/bank.actions'
 
-const RightSidebar = ({ user, transactions, banks }: RightSidebarProps) => {
+const RightSidebar = async ({ id }: { id: string | string[] | undefined }) => {
+
+    const data = await fetchHomeData({ id })
+
+    if (!data) return
+
+    const { loggedIn, accountsData, appwriteItemId, account } = data;
+
+    const transactions = account?.transactions
+    const banks = accountsData?.slice(0, 2)
+
     const categories: CategoryCount[] = countTransactionCategories(transactions);
 
     return (
@@ -14,33 +27,32 @@ const RightSidebar = ({ user, transactions, banks }: RightSidebarProps) => {
                 <div className="profile-banner" />
                 <div className="profile">
                     <div className="profile-img">
-                        <span className="text-5xl font-bold text-blue-500">{user.firstName[0]}</span>
+                        <span className="text-5xl font-bold text-blue-500">{loggedIn.firstName[0]}</span>
                     </div>
 
                     <div className="profile-details">
                         <h1 className='profile-name'>
-                            {user.firstName} {user.lastName}
+                            {loggedIn.firstName} {loggedIn.lastName}
                         </h1>
                         <p className="profile-email">
-                            {user.email}
+                            {loggedIn.email}
                         </p>
                     </div>
                 </div>
             </section>
 
             <section className="banks">
-                <div className="flex w-full justify-between">
+                <div className="flex w-full justify-between items-center">
                     <h2 className="header-2">My Banks</h2>
                     <Link href="/" className="flex gap-2">
-                        <Image
+                        {/* <Image
                             src="/icons/plus.svg"
                             width={20}
                             height={20}
                             alt="plus"
-                        />
-                        <h2 className="text-14 font-semibold text-gray-600">
-                            Add Bank
-                        </h2>
+                        /> */}
+                        {/* Add Bank */}
+                        <PlaidLink user={loggedIn} type="rightSidebar" />
                     </Link>
                 </div>
 
@@ -50,7 +62,7 @@ const RightSidebar = ({ user, transactions, banks }: RightSidebarProps) => {
                             <BankCard
                                 key={banks[0].$id}
                                 account={banks[0]}
-                                userName={`${user.firstName} ${user.lastName}`}
+                                userName={`${loggedIn.firstName} ${loggedIn.lastName}`}
                                 showBalance={false}
                             />
                         </div>
@@ -59,7 +71,7 @@ const RightSidebar = ({ user, transactions, banks }: RightSidebarProps) => {
                                 <BankCard
                                     key={banks[1].$id}
                                     account={banks[1]}
-                                    userName={`${user.firstName} ${user.lastName}`}
+                                    userName={`${loggedIn.firstName} ${loggedIn.lastName}`}
                                     showBalance={false}
                                 />
                             </div>

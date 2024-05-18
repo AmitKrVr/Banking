@@ -36,8 +36,8 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
           <TableHead className="px-2">Amount</TableHead>
           <TableHead className="px-2">Status</TableHead>
           <TableHead className="px-2">Date</TableHead>
-          <TableHead className="px-2 max-md:hidden">Channel</TableHead>
-          <TableHead className="px-2 max-md:hidden">Category</TableHead>
+          <TableHead className="px-2">Channel</TableHead>
+          <TableHead className="px-2">Category</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -77,7 +77,7 @@ const TransactionsTable = ({ transactions }: TransactionTableProps) => {
                 {t.paymentChannel}
               </TableCell>
 
-              <TableCell className="pl-2 pr-10 max-md:hidden">
+              <TableCell className="pl-2 pr-10">
                 <CategoryBadge category={t.category} />
               </TableCell>
             </TableRow>

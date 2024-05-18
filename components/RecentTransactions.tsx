@@ -4,20 +4,24 @@ import { BankTabItem } from './BankTabItem'
 import BankInfo from './BankInfo'
 import TransactionsTable from './TransactionsTable'
 import { Pagination } from './Pagination'
+import { fetchHomeData } from '@/lib/utils'
 
-const RecentTransactions = ({
-    accounts,
-    transactions = [],
-    appwriteItemId,
-    page = 1,
-}: RecentTransactionsProps) => {
+const RecentTransactions = async ({ currentPage, id }: { currentPage: number, id: string | string[] | undefined }) => {
+    const data = await fetchHomeData({ id })
+
+    if (!data) return
+
+    const { accountsData, appwriteItemId, account } = data;
+
+    console.log("accountsData : ", accountsData);
+
     const rowsPerPage = 10;
-    const totalPages = Math.ceil(transactions.length / rowsPerPage);
+    const totalPages = Math.ceil(account?.transactions.length / rowsPerPage);
 
-    const indexOfLastTransaction = page * rowsPerPage;
+    const indexOfLastTransaction = currentPage * rowsPerPage;
     const indexOfFirstTransaction = indexOfLastTransaction - rowsPerPage;
 
-    const currentTransactions = transactions.slice(
+    const currentTransactions = account?.transactions.slice(
         indexOfFirstTransaction, indexOfLastTransaction
     )
 
@@ -35,7 +39,7 @@ const RecentTransactions = ({
 
             <Tabs defaultValue={appwriteItemId} className="w-full">
                 <TabsList className="recent-transactions-tablist">
-                    {accounts.map((account: Account) => (
+                    {accountsData.map((account: Account) => (
                         <TabsTrigger key={account.id} value={account.appwriteItemId}>
                             <BankTabItem
                                 key={account.id}
@@ -46,7 +50,7 @@ const RecentTransactions = ({
                     ))}
                 </TabsList>
 
-                {accounts.map((account: Account) => (
+                {accountsData.map((account: Account) => (
                     <TabsContent
                         value={account.appwriteItemId}
                         key={account.id}
@@ -63,7 +67,7 @@ const RecentTransactions = ({
 
                         {totalPages > 1 && (
                             <div className="my-4 w-full">
-                                <Pagination totalPages={totalPages} page={page} />
+                                <Pagination totalPages={totalPages} page={currentPage} />
                             </div>
                         )}
                     </TabsContent>

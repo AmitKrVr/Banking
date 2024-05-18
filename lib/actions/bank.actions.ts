@@ -10,10 +10,10 @@ import {
 } from "plaid";
 
 import { plaidClient } from "../plaid";
-import { parseStringify } from "../utils";
+import { countTransactionCategories, parseStringify } from "../utils";
 
 import { getTransactionsByBankId } from "./transaction.actions";
-import { getBanks, getBank } from "./user.actions";
+import { getBanks, getBank, getLoggedInUser } from "./user.actions";
 
 // Get multiple bank accounts
 export const getAccounts = async ({ userId }: getAccountsProps) => {
@@ -184,3 +184,24 @@ export const getTransactions = async ({
         console.error("An error occurred while getting the accounts:", error);
     }
 };
+
+
+export const rightSidebarData = async ({ id }: { id: string | string[] | undefined }) => {
+
+    const user = await getLoggedInUser();
+    const accounts = await getAccounts({
+        userId: user.$id
+    })
+
+    const accountsData = accounts?.data;
+
+    const banks = accountsData?.slice(0, 2)
+
+    const appwriteItemId = (id as string) || accountsData[0]?.appwriteItemId;
+
+    const account = await getAccount({ appwriteItemId });
+
+    const categories: CategoryCount[] = countTransactionCategories(account?.transactions);
+
+    return { user, banks, categories }
+}

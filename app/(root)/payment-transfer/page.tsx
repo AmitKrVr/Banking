@@ -2,18 +2,11 @@ import HeaderBox from '@/components/HeaderBox'
 import PaymentTransferForm from '@/components/PaymentTransferForm'
 import { getAccounts } from '@/lib/actions/bank.actions';
 import { getLoggedInUser } from '@/lib/actions/user.actions';
-import React from 'react'
+import React, { Suspense } from 'react'
+import { PaymentTransferSkeleton } from "@/components/skeletons"
 
-const Transfer = async () => {
-    const loggedIn = await getLoggedInUser();
-    const accounts = await getAccounts({
-        userId: loggedIn.$id
-    })
 
-    if (!accounts) return;
-
-    const accountsData = accounts?.data;
-
+const Transfer = () => {
     return (
         <section className="payment-transfer">
             <HeaderBox
@@ -22,9 +15,26 @@ const Transfer = async () => {
             />
 
             <section className="size-full pt-5">
-                <PaymentTransferForm accounts={accountsData} />
+                <Suspense fallback={<PaymentTransferSkeleton />}>
+                    <PaymentTransfer />
+                </Suspense>
             </section>
         </section>
+    )
+}
+
+
+const PaymentTransfer = async () => {
+    const loggedIn = await getLoggedInUser();
+    const accounts = await getAccounts({
+        userId: loggedIn.$id
+    })
+
+    if (!accounts) return;
+
+    const accountsData = accounts?.data;
+    return (
+        <PaymentTransferForm accounts={accountsData} />
     )
 }
 
