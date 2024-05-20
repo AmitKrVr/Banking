@@ -12,9 +12,10 @@ interface CustomInput {
     label: string,
     placeholder?: string
     type: string,
+    maxLength?: number
 }
 
-const CustomInput = ({ control, name, label, placeholder, type }: CustomInput) => {
+const CustomInput = ({ control, name, label, placeholder, type, maxLength }: CustomInput) => {
     return (
         <FormField
             control={control}
@@ -24,7 +25,9 @@ const CustomInput = ({ control, name, label, placeholder, type }: CustomInput) =
                     <FormLabel className="form-label">{label}</FormLabel>
                     <div className="flex w-full flex-col">
                         <FormControl>
-                            <Input type={type} placeholder={placeholder} className="input-class" {...field}></Input>
+                            {maxLength ? <Input type={type} placeholder={placeholder} className="input-class min-w-16 max-w-24 placeholder:text-sm " maxLength={maxLength} {...field}></Input> :
+                                <Input type={type} placeholder={placeholder} className="input-class" {...field}></Input>
+                            }
                         </FormControl>
                         <FormMessage className="form-message mt-2" />
                     </div>

@@ -2,52 +2,72 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
+import { Form, FormLabel } from "@/components/ui/form"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+
 import { Button } from "@/components/ui/button"
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
 import CustomInput from './CustomInput';
-import { authFormSchema } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { getLoggedInUser, signIn, signUp } from '@/lib/actions/user.actions';
+import { authFormSchema, states } from '@/lib/utils';
+import { signIn, signUp } from '@/lib/actions/user.actions';
 import PlaidLink from './PlaidLink';
+
+
+// Function to get state by pincode
+const getStateAndCityByPincode = async (pincode: string): Promise<{ state: string, city: string }> => {
+    try {
+        const response = await fetch(`https://api.zippopotam.us/us/${pincode}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        const state = data.places[0]['state abbreviation'];
+        const city = data.places[0]['place name'];
+        return { state: state || '', city: city || '' };
+    } catch (error) {
+        console.error('Error fetching state and city:', error)
+        return { state: '', city: '' };
+    }
+};
 
 const AuthForm = ({ type }: { type: string }) => {
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [postalCodeError, setPostalCodeError] = useState('');
 
     const formSchema = authFormSchema(type);
 
     // 1. Define your form.
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<ReturnType<typeof authFormSchema>>>({
+        resolver: zodResolver(authFormSchema(type)),
         defaultValues: {
+            firstName: "",
+            lastName: "",
+            address1: "",
+            city: "",
+            state: "",
+            postalCode: "",
+            dateOfBirth: "",
+            ssn: "",
             email: "",
-            password: ''
+            password: "",
         },
     })
 
     // 2. Define a submit handler.
-    const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const onSubmit = async (data: z.infer<ReturnType<typeof authFormSchema>>) => {
         setIsLoading(true);
 
         try {
-            // Sign up with Appwrite & create plaid token
 
+            // Sign up with Appwrite & create plaid token
             if (type === 'sign-up') {
                 const userData = {
                     firstName: data.firstName!,
@@ -64,32 +84,51 @@ const AuthForm = ({ type }: { type: string }) => {
 
                 const newUser = await signUp(userData);
 
+                console.log("newUser: ", newUser);
+
                 setUser(newUser);
+
             }
 
             if (type === 'sign-in') {
 
-                const startTime = Date.now();
-
                 // Perform your operation here
-
                 const response = await signIn({
                     email: data.email,
                     password: data.password,
                 })
 
-                const endTime = Date.now();
-                const duration = endTime - startTime;
-                console.log("Duration:", duration, "milliseconds");
-
                 if (response) router.push('/')
             }
         } catch (error) {
-            console.log(error);
+            console.log("Submission error: ", error);
         } finally {
             setIsLoading(false);
         }
     }
+
+    useEffect(() => {
+        const subscription = form.watch(async (value, { name }) => {
+            if (name === 'postalCode') {
+                const postalCode = value.postalCode ?? "";
+                if (postalCode.length === 5) {
+                    const { state, city } = await getStateAndCityByPincode(postalCode);
+                    if (state && city) {
+                        setPostalCodeError('');
+                        form.setValue('state', state, { shouldValidate: true });
+                        form.setValue('city', city, { shouldValidate: true });
+                    } else {
+                        setPostalCodeError('Please enter a valid 5 digit postal code.');
+                    }
+                } else if (postalCode.length > 5) {
+                    setPostalCodeError('Postal code must be exactly 5 digits.');
+                } else {
+                    setPostalCodeError('');
+                }
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [form]);
 
     return (
         <section className="auth-form">
@@ -137,11 +176,40 @@ const AuthForm = ({ type }: { type: string }) => {
                                     </div>
                                     <CustomInput type="text" control={form.control} name='address1' label="Address" placeholder='Enter your specific address' />
                                     <CustomInput type="text" control={form.control} name='city' label="City" placeholder='Enter your city' />
+
                                     <div className="flex gap-4">
-                                        <CustomInput type="text" control={form.control} name='state' label="State" placeholder='Example: NY' />
-                                        <CustomInput type="text" control={form.control} name='postalCode' label="Postal Code" placeholder='Example: 11101' />
+                                        <div className='space-y-0.5'>
+                                            <CustomInput type="text" control={form.control} name='postalCode' label="Postal Code" placeholder='Postal Code' maxLength={5} />
+                                            {postalCodeError && <p className="text-xs font-semibold text-red-500">{postalCodeError}</p>}
+                                        </div>
+
+                                        {/* State */}
+                                        <div className='flex flex-1 flex-col gap-1.5'>
+                                            <FormLabel className="form-label">State</FormLabel>
+
+                                            <Controller
+                                                name="state"
+                                                control={form.control}
+                                                render={({ field }) => (
+                                                    <Select {...field}>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select your State" />
+                                                        </SelectTrigger>
+                                                        <SelectContent className='bg-white'>
+                                                            <SelectGroup>
+                                                                <SelectLabel>Select</SelectLabel>
+                                                                {states.map((state) =>
+                                                                    <SelectItem key={state.code} value={state.code} className='cursor-pointer focus:bg-gray-100 focus:font-semibold'>{state.name}</SelectItem>
+                                                                )}
+                                                            </SelectGroup>
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex gap-4">
+
+                                    <div className="flex flex-col md:flex-row gap-5">
                                         <CustomInput type="date" control={form.control} name='dateOfBirth' label="Date of Birth" />
                                         <CustomInput type="text" control={form.control} name='ssn' label="SSN" placeholder='Example: 1234' />
                                     </div>
@@ -182,4 +250,4 @@ const AuthForm = ({ type }: { type: string }) => {
     )
 }
 
-export default AuthForm
+export default AuthForm;

@@ -69,6 +69,7 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
 
         if (!newUserAccount) throw new Error('Error creating user')
 
+
         const dwollaCustomerUrl = await createDwollaCustomer({
             ...userData,
             type: 'personal'
@@ -127,7 +128,7 @@ export const logoutAccount = async () => {
 
         cookies().delete('appwrite-session');
 
-        await account.deleteSession('current');
+        await account.deleteSessions();
 
         console.log("Session deleted");
     } catch (error) {
