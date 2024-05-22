@@ -13,8 +13,6 @@ const RecentTransactions = async ({ currentPage, id }: { currentPage: number, id
 
     const { accountsData, appwriteItemId, account } = data;
 
-    console.log("accountsData : ", accountsData);
-
     const rowsPerPage = 10;
     const totalPages = Math.ceil(account?.transactions.length / rowsPerPage);
 

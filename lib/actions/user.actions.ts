@@ -108,23 +108,33 @@ export const signUp = async ({ password, ...userData }: SignUpParams) => {
 
 export async function getLoggedInUser() {
     try {
-        const { account } = await createSessionClient();
+        const sessionClient = await createSessionClient();
+
+        if (!sessionClient) {
+            return null; // No session client available, returning null
+        }
+
+        const { account } = sessionClient;
+
         const result = await account.get();
 
         const user = await getUserInfo({ userId: result.$id })
 
         return parseStringify(user);
     } catch (error) {
-        console.log(error)
+        console.error("Failed to get logged-in user:", error);
         return null;
     }
 }
 
 export const logoutAccount = async () => {
     try {
-        const { account } = await createSessionClient();
+        const sessionClient = await createSessionClient();
 
-        console.log("Account client created:", account);
+        if (!sessionClient) {
+            return false; // No session client available, returning false
+        }
+        const { account } = sessionClient;
 
         cookies().delete('appwrite-session');
 

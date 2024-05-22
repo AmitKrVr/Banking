@@ -24,9 +24,7 @@
         "lucide-react": "^0.374.0",
         "next": "14.2.3",
         "node-appwrite": "^12.0.1",
-        "nodemailer": "^6.9.13",
         "plaid": "^23.0.0",
-        "postcode-validator": "^3.8.20",
         "query-string": "^9.0.0",
         "react": "^18",
         "react-chartjs-2": "^5.2.0",
@@ -34,6 +32,7 @@
         "react-dom": "^18",
         "react-hook-form": "^7.51.3",
         "react-plaid-link": "^3.5.1",
+        "react-topbar-progress-indicator": "^4.1.1",
         "tailwind-merge": "^2.3.0",
         "tailwindcss-animate": "^1.0.7",
         "zod": "^3.23.4"

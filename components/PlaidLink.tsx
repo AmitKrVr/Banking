@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Button } from './ui/button'
 import { PlaidLinkOnSuccess, PlaidLinkOptions, usePlaidLink } from 'react-plaid-link'
-import { redirect, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { createLinkToken, exchangePublicToken } from '@/lib/actions/user.actions';
 import Image from 'next/image';
 
@@ -59,7 +59,7 @@ const PlaidLink = ({ user, variant, type }: PlaidLinkProps) => {
                         width={24}
                         height={24}
                     />
-                    <p className='hiddenl text-[16px] font-semibold text-black-2 xl:block'>{type === 'rightSidebar' ? "Add Bank" : "Connect Bank"}</p>
+                    <p className='hidden text-[16px] font-semibold text-black-2 xl:block '>{type === 'rightSidebar' ? "Add Bank" : "Connect Bank"}</p>
                 </Button>)
                 : (
                     <Button onClick={() => open()} className="plaidlink-default">

@@ -5,6 +5,7 @@ import { Inter, IBM_Plex_Serif } from "next/font/google";
 import "./globals.css";
 import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 import GlobalError from "./global-error";
+import ProgressBarHandler from "@/components/ProgressBarHandler";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const ibmPlexSerif = IBM_Plex_Serif({
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${ibmPlexSerif.variable}`}>
+        <ProgressBarHandler />
         <ErrorBoundary errorComponent={GlobalError}>
           {children}
         </ErrorBoundary>

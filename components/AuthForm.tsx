@@ -5,13 +5,12 @@ import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
+import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Controller, useForm } from "react-hook-form"
+
 import { Form, FormLabel } from "@/components/ui/form"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
-
 import { Button } from "@/components/ui/button"
 import CustomInput from './CustomInput';
 import { authFormSchema, states } from '@/lib/utils';
@@ -40,6 +39,7 @@ const AuthForm = ({ type }: { type: string }) => {
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('')
     const [postalCodeError, setPostalCodeError] = useState('');
 
     const formSchema = authFormSchema(type);
@@ -63,7 +63,9 @@ const AuthForm = ({ type }: { type: string }) => {
 
     // 2. Define a submit handler.
     const onSubmit = async (data: z.infer<ReturnType<typeof authFormSchema>>) => {
+        if (isLoading) return; // Prevent duplicate submissions
         setIsLoading(true);
+        setError('');  // Clear any previous error
 
         try {
 
@@ -84,8 +86,6 @@ const AuthForm = ({ type }: { type: string }) => {
 
                 const newUser = await signUp(userData);
 
-                console.log("newUser: ", newUser);
-
                 setUser(newUser);
 
             }
@@ -98,14 +98,23 @@ const AuthForm = ({ type }: { type: string }) => {
                     password: data.password,
                 })
 
-                if (response) router.push('/')
+                if (response) {
+                    router.push('/');
+                } else {
+                    setError('Invalid credentials. Please check the email and password.');  // Set error message
+                }
+
             }
         } catch (error) {
+            setError('An unexpected error occurred. Please try again');
             console.log("Submission error: ", error);
         } finally {
-            setIsLoading(false);
+            setTimeout(() => {
+                setIsLoading(false)
+            }, 2000)
         }
     }
+
 
     useEffect(() => {
         const subscription = form.watch(async (value, { name }) => {
@@ -176,37 +185,39 @@ const AuthForm = ({ type }: { type: string }) => {
                                     </div>
                                     <CustomInput type="text" control={form.control} name='address1' label="Address" placeholder='Enter your specific address' />
                                     <CustomInput type="text" control={form.control} name='city' label="City" placeholder='Enter your city' />
-
-                                    <div className="flex gap-4">
-                                        <div className='space-y-0.5'>
+                                    <div className='space-y-0.5'>
+                                        <div className="flex gap-4">
+                                            {/* <div className='space-y-0.5'> */}
                                             <CustomInput type="text" control={form.control} name='postalCode' label="Postal Code" placeholder='Postal Code' maxLength={5} />
-                                            {postalCodeError && <p className="text-xs font-semibold text-red-500">{postalCodeError}</p>}
-                                        </div>
 
-                                        {/* State */}
-                                        <div className='flex flex-1 flex-col gap-1.5'>
-                                            <FormLabel className="form-label">State</FormLabel>
+                                            {/* </div> */}
 
-                                            <Controller
-                                                name="state"
-                                                control={form.control}
-                                                render={({ field }) => (
-                                                    <Select {...field}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select your State" />
-                                                        </SelectTrigger>
-                                                        <SelectContent className='bg-white'>
-                                                            <SelectGroup>
-                                                                <SelectLabel>Select</SelectLabel>
-                                                                {states.map((state) =>
-                                                                    <SelectItem key={state.code} value={state.code} className='cursor-pointer focus:bg-gray-100 focus:font-semibold'>{state.name}</SelectItem>
-                                                                )}
-                                                            </SelectGroup>
-                                                        </SelectContent>
-                                                    </Select>
-                                                )}
-                                            />
+                                            {/* State */}
+                                            <div className='flex flex-1 flex-col gap-1.5'>
+                                                <FormLabel className="form-label">State</FormLabel>
+
+                                                <Controller
+                                                    name="state"
+                                                    control={form.control}
+                                                    render={({ field }) => (
+                                                        <Select {...field}>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select your State" />
+                                                            </SelectTrigger>
+                                                            <SelectContent className='bg-white'>
+                                                                <SelectGroup>
+                                                                    <SelectLabel>Select</SelectLabel>
+                                                                    {states.map((state) =>
+                                                                        <SelectItem key={state.code} value={state.code} className='cursor-pointer focus:bg-gray-100 focus:font-semibold'>{state.name}</SelectItem>
+                                                                    )}
+                                                                </SelectGroup>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                />
+                                            </div>
                                         </div>
+                                        {postalCodeError && <p className="text-xs font-semibold text-red-500">{postalCodeError}</p>}
                                     </div>
 
                                     <div className="flex flex-col md:flex-row gap-5">
@@ -218,7 +229,11 @@ const AuthForm = ({ type }: { type: string }) => {
 
                             <CustomInput type="text" control={form.control} name='email' label="Email" placeholder='Enter your email' />
 
-                            <CustomInput type="password" control={form.control} name='password' label="Password" placeholder='Enter your password' />
+                            <div className='space-y-0.5'>
+                                <CustomInput type="password" control={form.control} name='password' label="Password" placeholder='Enter your password' />
+
+                                {error && <p className='text-red-500 text-xs font-semibold'>{error}</p>}
+                            </div>
 
                             <div className="flex flex-col gap-4">
                                 <Button type="submit" disabled={isLoading} className="form-btn">

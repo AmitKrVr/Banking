@@ -1,15 +1,28 @@
 import { logoutAccount } from '@/lib/actions/user.actions'
+import { Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { useState } from 'react'
 
 const Footer = ({ user, type = 'desktop' }: FooterProps) => {
     const router = useRouter();
+    const [isActive, setIsActive] = useState(false)
 
     const handleLogOut = async () => {
-        const loggedOut = await logoutAccount();
+        setIsActive(true)
+        const confirmed = window.confirm("Are you sure you want to log out?");
 
-        if (loggedOut) router.push('/sign-in')
+        try {
+            if (confirmed) {
+                const loggedOut = await logoutAccount();
+                if (loggedOut) router.push('/sign-in')
+            }
+        } catch (error) {
+            console.error("Failed to log out")
+        } finally {
+            setIsActive(false)
+        }
+
     }
 
     return (
@@ -30,7 +43,10 @@ const Footer = ({ user, type = 'desktop' }: FooterProps) => {
             </div>
 
             <div className="footer_image" onClick={handleLogOut}>
-                <Image src="icons/logout.svg" fill alt="jsm" />
+                {isActive ?
+                    <Loader2 size={25} className="animate-spin text-blue-700" /> :
+                    <Image src="icons/logout.svg" fill alt="jsm" />
+                }
             </div>
         </footer>
     )
